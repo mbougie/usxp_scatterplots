@@ -63,7 +63,7 @@ killDbConnections()
 
 
 # ###### link to json files #################################################
-figure_json = 'C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\json\\figure_json_v2.json'
+figure_json = 'C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\json\\figure_json.json'
 figure_obj<- fromJSON(file=figure_json)
 
 
@@ -123,25 +123,12 @@ createDF <- function(name, map){
   
   ####join usxp dataframe together specific dataframe
   df  <- df_usxp %>% inner_join(df_init , by = "atlas_name")
-  # df  <- df_usxp %>% inner_join(df_init , by = "atlas_stco")
 
-  # df$acres_per_year_per_eu = (df$acres_per_year/df$acres) * 100
-
-  ####create difference of acres per year between dataframes
-  # df$diff_acres = (df$acres_usxp_per_year-df$acres_per_year)
-  # 
-  # # ####the difference per year relative to acres of usxp per year
-  # df$diff_perc = (df$diff_acres/(df$acres_usxp_per_year)*100)
-  # 
-  # df$diff_perc = (df$diff_acres/(df$acres_usxp_per_year_per_eu)*100)
   
   ####create difference of acres per year between dataframes
-  df$diff_acres = (df$acres_usxp_per_year_per_eu - df$acres_per_year_per_eu)
+  df$diff_acres = (df$acres_per_year_per_eu - df$acres_usxp_per_year_per_eu)
   # ####the difference per year relative to acres of usxp per year
-  df$diff_perc = (df$diff_acres/(df$acres_usxp_per_year_per_eu))
-  
-  
-
+  df$diff_ratio = (df$diff_acres/(df$acres_usxp_per_year_per_eu))
   
   ########### apply saturation for map figure ##################################
   
@@ -149,13 +136,23 @@ createDF <- function(name, map){
   df$col_sat = df[[fp$maps[[map]]$current_col]]
   df$col_sat[df$col_sat <= -fp$maps[[map]]$sat] <- -fp$maps[[map]]$sat
   df$col_sat[df$col_sat >= fp$maps[[map]]$sat] <- fp$maps[[map]]$sat
+  
+  # ########### transform data for scatterplot figure #################################
+  
+  # df$x_log1p = log1p(df$acres_usxp_per_year)
+  # df$y_log1p = log1p(df$acres_per_year)
+  
+  
+  
+  
+  
 
   # ########### transform data for scatterplot figure #################################
-  df$x = df[[fp$scatterplots$perc_eu$x]]
-  df$y = df[[fp$scatterplots$perc_eu$y]]
-
-  df$x_log10 = log(df[[fp$scatterplots$perc_eu$x]], base=10)
-  df$y_log10 = log(df[[fp$scatterplots$perc_eu$y]], base=10)
+  # df$x = df[[fp$scatterplots$perc_eu$x]]
+  # df$y = df[[fp$scatterplots$perc_eu$y]]
+  # 
+  # df$x_log10 = log(df[[fp$scatterplots$perc_eu$x]], base=10)
+  # df$y_log10 = log(df[[fp$scatterplots$perc_eu$y]], base=10)
 
 
   ### Note need to use the st_as_sf function after appending columns or geom_sf won't recognize object!!!!
@@ -171,11 +168,11 @@ qaqc <- function(df, fileout){
   csv_out0 = paste0('I:\\projects\\usxp\\series\\s35\\deliverables\\scatterplot\\csv\\', fileout, '_raw.csv')
   write.csv(test, csv_out0)
   
-  test <- test %>% dplyr::select(acres_usxp_per_year_per_eu, acres_per_year_per_eu , x_log10, y_log10, x_log10_plus1, y_log10_plus1)
-  df_qaqc <- data.frame(min=sapply(test,min), max=sapply(test,max), min=sapply(test[Reduce(`&`, lapply(test, is.finite)),],min), max=sapply(test[Reduce(`&`, lapply(test, is.finite)),],max))
-  
-  csv_out1 = paste0('I:\\projects\\usxp\\series\\s35\\deliverables\\scatterplot\\csv\\', fileout, '_qaqc.csv')
-  write.csv(df_qaqc, csv_out1)
+  # test <- test %>% dplyr::select(acres_usxp_per_year_per_eu, acres_per_year_per_eu , x_log10, y_log10, x_log10_plus1, y_log10_plus1)
+  # df_qaqc <- data.frame(min=sapply(test,min), max=sapply(test,max), min=sapply(test[Reduce(`&`, lapply(test, is.finite)),],min), max=sapply(test[Reduce(`&`, lapply(test, is.finite)),],max))
+  # 
+  # csv_out1 = paste0('I:\\projects\\usxp\\series\\s35\\deliverables\\scatterplot\\csv\\', fileout, '_qaqc.csv')
+  # write.csv(df_qaqc, csv_out1)
   
   # csv_out2 = paste0('I:\\projects\\usxp\\series\\s35\\deliverables\\scatterplot\\csv\\', fileout, '.csv')
   # write.csv(test, csv_out2)
@@ -269,7 +266,7 @@ hexBinRegPlot = function(df, dataset){
   # p <- ggplot(data=df,aes(x = .data[[fp$log_trans[1]]], y = .data[[fp$log_trans[2]]])) +
   # p <- ggplot(data=df,aes(x = x_log10, y = y_log10)) +
     # p <- ggplot(data=df,aes(x = .data[[x]], y = .data[[y]])) +
-  p <- ggplot(data=df,aes(x = x, y = y)) +
+  p <- ggplot(data=df,aes(x = acres_usxp_per_year, y = acres_per_year)) +
     # geom_point() +
     geom_hex(bins = 35) +
     theme_bw()+
@@ -303,10 +300,14 @@ hexBinRegPlot = function(df, dataset){
     
     geom_abline(slope = 1, intercept = 0, colour="black",size=2, linetype = "dashed") +
     geom_smooth(method = "lm", se = FALSE, formula = my.formula, size=2, colour="black") +
+    # stat_poly_eq(formula = my.formula,
+    #              aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+    #              size=9,
+    #              parse = TRUE) +
     stat_poly_eq(formula = my.formula,
-                 aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+                 aes(label = ..rr.label..),
                  size=9,
-                 parse = TRUE) +
+                 parse = TRUE) + 
     # scale_x_continuous(trans='log10') +
     # scale_y_continuous(trans='log10') +
     scale_fill_gradientn(colors = rev(brewer.pal(11,"Spectral")))
@@ -323,7 +324,7 @@ hexBinRegPlot = function(df, dataset){
 ###### ~~~~~~~~~~~~~~~~~~~~~~~~queries~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-----########
 ########################################################################################
 
-eu='counties'
+eu='states'
 fp = figure_obj[[eu]]
 path_sql = 'C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\sql'
 
@@ -340,16 +341,19 @@ for(name in names(fp$datasets)){
     #####name="NLCD"
 
     df1 = createDF(name, map="map1")
+    qaqc(df=df1, name)
     fp$datasets[[name]]$df1 = df1
     map1 = createMap(df=df1, map="map1", plot.title=name)
     fp$datasets[[name]]$map1 = map1
 
     df2 = createDF(name, map="map2")
+    qaqc(df=df2, name)
     fp$datasets[[name]]$df2 = df2
     map2 = createMap(df=df2,map="map2", plot.title=name)
     fp$datasets[[name]]$map2 = map2
 
     df3 = createDF(name, map="map3")
+    qaqc(df=df3, name)
     fp$datasets[[name]]$df3 = df3
     map3 = createMap(df=df3,map="map3", plot.title='')
     fp$datasets[[name]]$map3 = map3

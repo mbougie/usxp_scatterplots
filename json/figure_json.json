@@ -60,6 +60,7 @@
             }
       },
       "districts": {
+
             "datasets_usxp":{
                   "exp":{
                         "con_usxp":"con_usxp_deliverables",
@@ -76,21 +77,24 @@
                         "query":"query_nri.sql",
                         "datasets_usxp":"exp",
                         "x":"x_log1p",
-                        "y":"y_log1p"
+                        "y":"y_log1p",
+                        "label":["a","b","c"]
                   },
                   "NLCD": {
                         "con":"con_usxp_deliverables",
                         "query":"query_nlcd.sql",
                         "datasets_usxp":"exp",
                         "x":"x_log1p",
-                        "y":"y_log1p"
+                        "y":"y_log1p",
+                        "label":["d","e","f"]
                   },
                   "NASS": {
                         "con":"con_nass",
                         "query":"query_nass.sql",
                         "datasets_usxp":"net",
                         "x":"acres_usxp_per_year",
-                        "y":"acres_per_year"
+                        "y":"acres_per_year",
+                        "label":["g","h","i"]
                   }
             },
             "maps":{
@@ -102,15 +106,15 @@
                   },
                   "map2": {
                         "current_col":"acres_per_year_per_eu",
-                        "legend.title":"Annual cropland expansion (%)",
+                        "legend.title":"Annual expansion (% of district area)",
                         "palette":"RdBu", 
                         "sat":1.0
                   },
                   "map3_diff_acres": {
                         "current_col":"diff_acres",
-                        "legend.title":"diff_acres",
+                        "legend.title":"Relative to this study (\u0394 percentage pts.)",
                         "palette":"RdBu", 
-                        "sat1":0.2
+                        "sat":1.0
                   },
                   "map3_diff_ratio": {
                         "current_col":"diff_ratio",

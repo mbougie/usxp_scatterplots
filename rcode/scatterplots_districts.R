@@ -67,6 +67,8 @@ killDbConnections()
 figure_json = 'C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\json\\figure_json.json'
 figure_obj<- fromJSON(file=figure_json)
 
+password_json = 'C:\\Users\\Bougie\\Desktop\\passwords\\passwords.json'
+password_obj <- fromJSON(file=password_json)
 
 
 ######################################################################
@@ -173,7 +175,7 @@ qaqc <- function(df, fileout){
 #### map function #########################################
 ##################################################################
 
-createMap <- function(df, map, plot.title){
+createMap <- function(df, map, plot.title, axis.title.y){
 
   
   d = ggplot() + 
@@ -200,14 +202,14 @@ createMap <- function(df, map, plot.title){
       size=1.5
     ) +
     
-  labs(title = plot.title) + 
+  labs(title = plot.title, y=axis.title.y) + 
     
   theme(
     #### nulled attributes ##################
     axis.text.x = element_blank(),
     axis.title.x=element_blank(),
     axis.text.y = element_blank(),
-    axis.title.y=element_blank(),
+    axis.title.y = element_text(size = 35, face="bold"),
     axis.ticks = element_blank(),
     axis.line = element_blank(),
     
@@ -217,19 +219,19 @@ createMap <- function(df, map, plot.title){
     panel.grid.major = element_blank(),
     
     legend.text=element_text(size=25),
-    legend.text.align = 0,
+    legend.text.align = 0.5,
     legend.title=element_text(size=30),
     legend.key.width = unit(4,"cm"),
     legend.key.height = unit(1,"cm"),
     
     # plot.background = element_rect(fill = 'green', color = 'red'),
     plot.background = element_rect(fill = NA, color = NA),
-    plot.title = element_text(size= 35),
+    plot.title=element_text(size=35, face = "bold"),
     plot.margin = unit(c(t=0, r=0, b=0, l=0), "cm")
   ) + 
  
   # coord_fixed(ratio = 1, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") + 
-  scale_fill_gradientn(colors = rev(brewer.pal(11,fp$maps[[map]]$palette)),
+  scale_fill_gradientn(colors = rev(brewer.pal(10,fp$maps[[map]]$palette)),
                        values = rescale(c(-fp$maps[[map]]$sat, 0, fp$maps[[map]]$sat)),
                        limits=c(-fp$maps[[map]]$sat, fp$maps[[map]]$sat),
                        guide = guide_colourbar(title = fp$maps[[map]]$legend.title,
@@ -245,13 +247,17 @@ createMap <- function(df, map, plot.title){
 ##### hexbin function ######################################################
 ###################################################################################
 
-hexBinRegPlot = function(df, dataset){
+hexBinRegPlot = function(df, dataset, plot.title){
   
   
   minVal = min(df$acres_usxp_per_year, df$acres_per_year, na.rm = T) # the na.rm = T here and below is important!
   print(minVal)
   maxVal = max(df$acres_usxp_per_year, df$acres_per_year, na.rm = T)
   print(maxVal)
+  
+  
+  # r2<-ddply(d,.(cat),function(x) summary(lm(x$yval ~ x$xval))$r.squared)
+  # names(r2)<-c("cat","r2")
   
   
   my.formula <- y ~ x
@@ -267,7 +273,8 @@ hexBinRegPlot = function(df, dataset){
                                   frame.colour = "black",
                                   title="Count"))+
 
-    labs(y=bquote(.(dataset) ~ ('acres' ~ yr^-1)), x=bquote('This Study' ~ ('acres' ~ yr^-1))) + 
+    labs(title = plot.title,
+         y=bquote(.(dataset) ~ ('acres' ~ yr^-1)), x=bquote('This study' ~ ('acres' ~ yr^-1))) + 
     theme(
       panel.border= element_rect(size = 2),
       text = element_text(size=30),
@@ -289,16 +296,20 @@ hexBinRegPlot = function(df, dataset){
       ###extend bottom margin of plot to accomidate legend and grob annotation
       # plot.background = element_rect(fill = 'green', color = 'red'),
       plot.background = element_rect(fill = NA, color = NA),
-      plot.margin = unit(c(t=2, r=0, b=2, l=0), "cm")
+      plot.title=element_text(size=30, face = "bold"),
+      plot.margin = unit(c(t=0, r=0, b=0, l=0), "cm")
     )+
     
     geom_abline(slope = 1, intercept = 0, colour="black",size=2, linetype = "dashed") +
     geom_smooth(method = "lm", se = FALSE, formula = my.formula, size=2, colour="black") +
+    # stat_poly_eq(formula = my.formula,
+    #              aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+    #              size=9,
+    #              parse = TRUE) +
     stat_poly_eq(formula = my.formula,
-                 aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+                 aes(label = ..rr.label..),
                  size=9,
-                 parse = TRUE) +
-    
+                 parse = TRUE) + 
 
     scale_y_continuous(trans = 'log1p',
                        breaks = breaks_log(base = 10),
@@ -310,6 +321,8 @@ hexBinRegPlot = function(df, dataset){
                        limits = c(minVal, maxVal))+
 
     scale_fill_gradientn(colors = rev(brewer.pal(11,"Spectral")))
+    
+    # geom_text(data=df,aes(color="red", label = paste("R^2: ", r2,sep="")),parse=T,x=100,y=c(1,1.25,1.5), show_guide=F)
   
   
   p
@@ -320,7 +333,7 @@ hexBinRegPlot = function(df, dataset){
 
 
 
-hexBinRegPlot_nass = function(df, dataset){
+hexBinRegPlot_nass = function(df, dataset, plot.title){
   minVal = min(df$acres_usxp_per_year, df$acres_per_year, na.rm = T) # the na.rm = T here and below is important!
   print(minVal)
   maxVal = max(df$acres_usxp_per_year, df$acres_per_year, na.rm = T)
@@ -339,7 +352,8 @@ hexBinRegPlot_nass = function(df, dataset){
                                   frame.colour = "black",
                                   title="Count"))+
     
-    labs(y=bquote(.(dataset) ~ ('acres' ~ yr^-1)), x=bquote('This Study' ~ ('acres' ~ yr^-1))) + 
+    labs(title = plot.title,
+         y=bquote(.(dataset) ~ ('acres' ~ yr^-1)), x=bquote('This study' ~ ('acres' ~ yr^-1))) + 
     theme(
       panel.border= element_rect(size = 2),
       text = element_text(size=30),
@@ -358,21 +372,28 @@ hexBinRegPlot_nass = function(df, dataset){
       # panel.background = element_rect(fill = 'green', color = 'red'),
       panel.background = element_rect(fill = NA, color = NA),
       ###extend bottom margin of plot to accomidate legend and grob annotation
-      # plot.background = element_rect(fill = 'green', color = 'red'),
+      plot.title=element_text(size=30, face = "bold"),
       plot.background = element_rect(fill = NA, color = NA),
-      plot.margin = unit(c(t=2, r=0, b=2, l=0), "cm")
+      plot.margin = unit(c(t=0, r=0, b=0, l=0), "cm")
     )+
     
     geom_abline(slope = 1, intercept = 0, colour="black",size=2, linetype = "dashed") +
     geom_smooth(method = "lm", se = FALSE, formula = my.formula, size=2, colour="black") +
+    # stat_poly_eq(formula = my.formula,
+    #              aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+    #              size=9,
+    #              parse = TRUE) +
+    
     stat_poly_eq(formula = my.formula,
-                 aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+                 aes(label = ..rr.label..),
                  size=9,
                  parse = TRUE) +
     
 
-    scale_x_continuous(limits = c(minVal, maxVal))+
-    scale_y_continuous(limits = c(minVal, maxVal))+
+    scale_x_continuous(limits = c(minVal, maxVal),
+                       labels=comma)+
+    scale_y_continuous(limits = c(minVal, maxVal),
+                       labels=comma)+
     scale_fill_gradientn(colors = rev(brewer.pal(11,"Spectral")))
   
   
@@ -404,32 +425,32 @@ path_sql = 'C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliver
   for(name in names(fp$datasets)){
     print(name)
 
-    df1 = createDF(name, map="map1")
-    fp$datasets[[name]]$df1 = df1
-    ###export df to csv
-    qaqc(df=df1, name)
-    map1 = createMap(df=df1, map="map1", plot.title=name)
-    fp$datasets[[name]]$map1 = map1
+    # df1 = createDF(name, map="map1")
+    # fp$datasets[[name]]$df1 = df1
+    # ###export df to csv
+    # qaqc(df=df1, name)
+    # map1 = createMap(df=df1, map="map1", plot.title=name, axis.title.y=name)
+    # fp$datasets[[name]]$map1 = map1
     
     df2 = createDF(name, map="map2")
     fp$datasets[[name]]$df2 = df2
     ###export df to csv
     qaqc(df=df2, name)
-    map2 = createMap(df=df2,map="map2", plot.title=name)
+    map2 = createMap(df=df2,map="map2", plot.title=fp$datasets[[name]]$label[1], axis.title.y=name)
     fp$datasets[[name]]$map2 = map2
     
     df3 = createDF(name, map="map3_diff_acres")
     fp$datasets[[name]]$df3 = df3
     ###export df to csv
     qaqc(df=df3, name)
-    map3 = createMap(df=df3,map="map3_diff_acres", plot.title='')
+    map3 = createMap(df=df3,map="map3_diff_acres", plot.title=fp$datasets[[name]]$label[2], axis.title.y='')
     fp$datasets[[name]]$map3 = map3
     
     if(name=="NASS"){
-      sp = hexBinRegPlot_nass(df=df2, dataset=name)
+      sp = hexBinRegPlot_nass(df=df2, dataset=name, plot.title=fp$datasets[[name]]$label[3])
       fp$datasets[[name]]$sp = sp
     }else{
-      sp = hexBinRegPlot(df=df2, dataset=name)
+      sp = hexBinRegPlot(df=df2, dataset=name, plot.title=fp$datasets[[name]]$label[3])
       fp$datasets[[name]]$sp = sp
     }
   }
@@ -446,12 +467,14 @@ nri_obj=fp$datasets[['NRI']]
 nlcd_obj=fp$datasets[['NLCD']]
 nass_obj=fp$datasets[['NASS']]
 
-# c0 = ggarrange(nri_obj$map1, nlcd_obj$map1, nass_obj$map1, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
+# nri_map2  = annotate_figure(nri_obj$map2,  left = text_grob('NRI',  rot = 90, face = 'bold'))
+# nlcd_map2 = annotate_figure(nlcd_obj$map2, left = text_grob('NLCD', rot = 90, face = 'bold'))
+# nass_map2 = annotate_figure(nass_obj$map2, left = text_grob('NASS', rot = 90, face = 'bold'))
 c2 = ggarrange(nri_obj$map2, nlcd_obj$map2, nass_obj$map2, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
 c3 = ggarrange(nri_obj$map3, nlcd_obj$map3, nass_obj$map3, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
 c4 = ggarrange(nri_obj$sp, nlcd_obj$sp, nass_obj$sp, ncol = 1, nrow = 3)
 
-map = ggarrange(c2, c3, c4, ncol = 3, nrow = 1)
+map = ggarrange(c2, c3, c4, ncol = 3, nrow = 1, widths = c(1, 1, 1))
 
 fileout = paste0('I:\\projects\\usxp\\series\\s35\\deliverables\\scatterplot\\figures\\',eu,'.png')
 ggplot2::ggsave(fileout, width = 34, height = 25, dpi = 500)
