@@ -183,8 +183,8 @@ createMap <- function(df, map, plot.title, axis.title.y){
   geom_polygon(
       data=states,
       aes(x=long,y=lat,group=group),
-      fill='#7e7e7e'
-      # fill='red'
+      # fill='#7e7e7e'
+      fill='#F5F5F5'
   ) +
     
 
@@ -198,7 +198,7 @@ createMap <- function(df, map, plot.title, axis.title.y){
       aes(x=long,y=lat,group=group),
       fill=NA,
       # color='#D3D3D3',
-      color='#383838',
+      colour='#808080',
       size=1.5
     ) +
     
@@ -209,7 +209,7 @@ createMap <- function(df, map, plot.title, axis.title.y){
     axis.text.x = element_blank(),
     axis.title.x=element_blank(),
     axis.text.y = element_blank(),
-    axis.title.y = element_text(size = 35, face="bold"),
+    axis.title.y = element_text(size = 40, face="bold", color = "#4e4d47"),
     axis.ticks = element_blank(),
     axis.line = element_blank(),
     
@@ -218,15 +218,15 @@ createMap <- function(df, map, plot.title, axis.title.y){
     panel.background = element_rect(fill = NA, color = NA),
     panel.grid.major = element_blank(),
     
-    legend.text=element_text(size=25),
+    legend.text=element_text(size=25, color = "#4e4d47"),
     legend.text.align = 0.5,
-    legend.title=element_text(size=30),
+    legend.title=element_text(size=30, color = "#4e4d47"),
     legend.key.width = unit(4,"cm"),
     legend.key.height = unit(1,"cm"),
     
     # plot.background = element_rect(fill = 'green', color = 'red'),
     plot.background = element_rect(fill = NA, color = NA),
-    plot.title=element_text(size=35, face = "bold"),
+    plot.title=element_text(size=35, face = "bold", color = "#4e4d47"),
     plot.margin = unit(c(t=0, r=0, b=0, l=0), "cm")
   ) + 
  
@@ -269,9 +269,10 @@ hexBinRegPlot = function(df, dataset, plot.title){
     geom_point(colour = "#5c8a8a", aes(size=20,alpha=0.7)) +
     # geom_hex(bins = 35) +
     theme_bw()+
-    guides(fill = guide_colourbar(ticks.colour = NA,
-                                  frame.colour = "black",
-                                  title="Count"))+
+    guides(colour = "none",size = "none") + 
+    # guides(fill = guide_colourbar(ticks.colour = NA,
+    #                               frame.colour = "black",
+    #                               title="Count"))+
 
     labs(title = plot.title,
          y=bquote(.(dataset) ~ ('acres' ~ yr^-1)), x=bquote('This study' ~ ('acres' ~ yr^-1))) + 
@@ -279,15 +280,18 @@ hexBinRegPlot = function(df, dataset, plot.title){
       panel.border= element_rect(size = 2),
       text = element_text(size=30),
       
-      axis.title.x = element_text(face = 'bold'),
-      axis.title.y = element_text(face = 'bold'),
+      axis.title.x = element_text(size = 30, face="bold"),
+      axis.title.y = element_text(size = 30, face="bold"),
       axis.title = element_text(size = 25),
       
-      legend.text=element_text(size=25),
+      legend.text=element_text(size=25, color="white"),
       legend.text.align = 0,
-      legend.title=element_text(size=30),
+      # legend.title=element_text(size=30),
+      legend.title = element_text(color = 'white'),
       legend.key.width = unit(1, "cm"),
       legend.key.height = unit(2, "cm"),
+      # legend.text = "none",
+      # legend.key = "none",
       legend.position="none",
       
       
@@ -297,7 +301,7 @@ hexBinRegPlot = function(df, dataset, plot.title){
       # plot.background = element_rect(fill = 'green', color = 'red'),
       plot.background = element_rect(fill = NA, color = NA),
       plot.title=element_text(size=30, face = "bold"),
-      plot.margin = unit(c(t=0, r=0, b=0, l=0), "cm")
+      plot.margin = unit(c(t=0.5, r=0, b=0, l=0), "cm")
     )+
     
     geom_abline(slope = 1, intercept = 0, colour="black",size=2, linetype = "dashed") +
@@ -348,9 +352,11 @@ hexBinRegPlot_nass = function(df, dataset, plot.title){
     geom_point(colour = "#5c8a8a", aes(size=20,alpha=0.7)) +
     # geom_hex(bins = 35) +
     theme_bw()+
-    guides(fill = guide_colourbar(ticks.colour = NA,
-                                  frame.colour = "black",
-                                  title="Count"))+
+    # guides(fill = guide_colourbar(ticks.colour = NA,
+    #                               frame.colour = "black",
+    #                               title="Count"))+
+    
+    guides(colour = "none",size = "none") + 
     
     labs(title = plot.title,
          y=bquote(.(dataset) ~ ('acres' ~ yr^-1)), x=bquote('This study' ~ ('acres' ~ yr^-1))) + 
@@ -358,15 +364,18 @@ hexBinRegPlot_nass = function(df, dataset, plot.title){
       panel.border= element_rect(size = 2),
       text = element_text(size=30),
       
-      axis.title.x = element_text(face = 'bold'),
-      axis.title.y = element_text(face = 'bold'),
+      axis.title.x = element_text(size = 30, face="bold"),
+      axis.title.y = element_text(size = 30, face="bold"),
       axis.title = element_text(size = 25),
       
-      legend.text=element_text(size=25),
+      legend.text=element_text(size=25, color="white"),
       legend.text.align = 0,
-      legend.title=element_text(size=30),
+      # legend.title=element_text(size=30),
+      legend.title = element_text(color = 'white'),
       legend.key.width = unit(1, "cm"),
       legend.key.height = unit(2, "cm"),
+      # legend.text = "none",
+      # legend.key = "none",
       legend.position="none",
       
       # panel.background = element_rect(fill = 'green', color = 'red'),
@@ -374,7 +383,7 @@ hexBinRegPlot_nass = function(df, dataset, plot.title){
       ###extend bottom margin of plot to accomidate legend and grob annotation
       plot.title=element_text(size=30, face = "bold"),
       plot.background = element_rect(fill = NA, color = NA),
-      plot.margin = unit(c(t=0, r=0, b=0, l=0), "cm")
+      plot.margin = unit(c(t=0.5, r=0, b=0, l=0), "cm")
     )+
     
     geom_abline(slope = 1, intercept = 0, colour="black",size=2, linetype = "dashed") +
@@ -472,7 +481,8 @@ nass_obj=fp$datasets[['NASS']]
 # nass_map2 = annotate_figure(nass_obj$map2, left = text_grob('NASS', rot = 90, face = 'bold'))
 c2 = ggarrange(nri_obj$map2, nlcd_obj$map2, nass_obj$map2, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
 c3 = ggarrange(nri_obj$map3, nlcd_obj$map3, nass_obj$map3, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
-c4 = ggarrange(nri_obj$sp, nlcd_obj$sp, nass_obj$sp, ncol = 1, nrow = 3)
+# c4 = ggarrange(nri_obj$sp, nlcd_obj$sp, nass_obj$sp, ncol = 1, nrow = 3)
+c4 = ggarrange(nri_obj$sp, nlcd_obj$sp, nass_obj$sp, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
 
 map = ggarrange(c2, c3, c4, ncol = 3, nrow = 1, widths = c(1, 1, 1))
 
