@@ -1,0 +1,234 @@
+{  
+      "states": {
+            "datasets_usxp":{
+                  "exp":{
+                        "con":"con_usxp_deliverables",
+                        "query":"query_usxp_exp.sql"
+                  },
+                  "net":{
+                        "con":"con_usxp",
+                        "query":"query_usxp_net.sql"
+                  }
+            }, 
+            "datasets": {
+                  "NRI": {
+                        "con":"con_nri",
+                        "query":"query_nri.sql",
+                        "datasets_usxp":"exp"
+                  },
+                  "NLCD": {
+                        "con":"con_usxp_deliverables",
+                        "query":"query_nlcd.sql",
+                        "datasets_usxp":"exp"
+                  },
+                  "NASS": {
+                        "con":"con_nass",
+                        "query":"query_nass.sql",
+                        "datasets_usxp":"net"
+                  }
+            },
+            "maps":{
+                  "map1": {
+                        "current_col":"acres_usxp_per_year_per_eu",
+                        "legend.title":"Annual Crop Expansion (%) ---USXP",
+                        "palette":"RdBu", 
+                        "sat":1.0
+                  },
+                  "map2": {
+                        "current_col":"acres_per_year_per_eu",
+                        "legend.title":"Annual Crop Expansion (%) --- datasets",
+                        "palette":"RdBu", 
+                        "sat":1.0
+                  },
+                  "map3": {
+                        "current_col":"diff_acres",
+                        "legend.title":"Difference (not normalized) --- test",
+                        "palette":"RdBu", 
+                        "sat":0.2
+                  }
+            },
+            "scatterplots": {
+                  "raw_acres": {
+                        "x":"acres_usxp_per_year",
+                        "y":"acres_per_year"
+                  },
+                  "perc_eu": {
+                        "x":"acres_usxp_per_year_per_eu",
+                        "y":"acres_per_year_per_eu",
+                        "log_trans":["no_log", "log10", "log10_plus1"]
+                  }
+            }
+      },
+      "districts": {
+            "datasets_usxp":{
+                  "exp":{
+                        "con_usxp":"con_usxp_deliverables",
+                        "query":"query_usxp_exp.sql"
+                  },
+                  "net":{
+                        "con_usxp":"con_usxp_deliverables",
+                        "query":"query_usxp_net.sql"
+                  }
+            }, 
+            "datasets": {
+                  "NRI": {
+                        "con":"con_nri",
+                        "query":"query_nri.sql",
+                        "datasets_usxp":"exp",
+                        "x":"x_log1p",
+                        "y":"y_log1p"
+                  },
+                  "NLCD": {
+                        "con":"con_usxp_deliverables",
+                        "query":"query_nlcd.sql",
+                        "datasets_usxp":"exp",
+                        "x":"x_log1p",
+                        "y":"y_log1p"
+                  },
+                  "NASS": {
+                        "con":"con_nass",
+                        "query":"query_nass.sql",
+                        "datasets_usxp":"net",
+                        "x":"acres_usxp_per_year",
+                        "y":"acres_per_year"
+                  }
+            },
+            "maps":{
+                  "map1": {
+                        "current_col":"acres_usxp_per_year_per_eu",
+                        "legend.title":"Annual Crop Expansion (%) ---USXP",
+                        "palette":"RdBu", 
+                        "sat":1.0
+                  },
+                  "map2": {
+                        "current_col":"acres_per_year_per_eu",
+                        "legend.title":"Annual cropland expansion (%)",
+                        "palette":"RdBu", 
+                        "sat":1.0
+                  },
+                  "map3_diff_acres": {
+                        "current_col":"diff_acres",
+                        "legend.title":"diff_acres",
+                        "palette":"RdBu", 
+                        "sat1":0.2
+                  },
+                  "map3_diff_ratio": {
+                        "current_col":"diff_ratio",
+                        "legend.title":"diff_ratio",
+                        "palette":"RdBu", 
+                        "sat":20
+                  }
+            },
+            "scatterplots": {
+
+            }
+      },
+      "counties": {
+            "datasets_usxp":{
+                  "exp":{
+                        "con":"con_usxp",
+                        "query":"query_usxp_exp.sql"
+                  },
+                  "net":{
+                        "con":"con_usxp",
+                        "query":"query_usxp_net.sql"
+                  }
+            }, 
+            "datasets": {
+                  "NRI": {
+                        "con":"con_nri",
+                        "query":"query_nri.sql",
+                        "datasets_usxp":"exp"
+                  },
+                  "NLCD": {
+                        "con":"con_usxp_deliverables",
+                        "query":"query_nlcd.sql",
+                        "datasets_usxp":"exp"
+                  },
+                  "NASS": {
+                        "con":"con_nass",
+                        "query":"query_nass.sql",
+                        "datasets_usxp":"net"
+                  }
+            },
+            "maps":{
+                  "map1": {
+                        "current_col":"acres_usxp_per_year_per_eu",
+                        "legend.title":"Annual Crop Expansion (%) ---USXP",
+                        "palette":"RdBu", 
+                        "sat":1.0
+                  },
+                  "map2": {
+                        "current_col":"acres_per_year_per_eu",
+                        "legend.title":"Annual Crop Expansion (%) --- datasets",
+                        "palette":"RdBu", 
+                        "sat":1.0
+                  },
+                  "map3": {
+                        "current_col":"diff_acres",
+                        "legend.title":"Difference (not normalized) --- test",
+                        "palette":"RdBu", 
+                        "sat":0.2
+                  }
+            },
+            "scatterplots": {
+                  "raw_acres": {
+                        "x":"acres_usxp_per_year",
+                        "y":"acres_per_year"
+                  },
+                  "perc_eu": {
+                        "x":"acres_usxp_per_year_per_eu",
+                        "y":"acres_per_year_per_eu",
+                        "log_trans":["no_log", "log10", "log10_plus1"]
+                  }
+            }
+      }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

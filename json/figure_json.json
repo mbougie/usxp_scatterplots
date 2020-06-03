@@ -1,0 +1,226 @@
+{      
+      "states": {
+            "maps": {
+                  "diff_acres": {
+                        "name_map":"raw",
+                        "col": "diff_acres",
+                        "sat":{
+                              "nri":[-100000, 100000],
+                              "nlcd":[-20000, 20000],
+                              "nass":[-50000, 50000]
+                        },
+
+                        "legend.title":"Diff (acres)"
+                  },
+                  "perc_year_eu": {
+                        "col": "perc_year_eu",
+                        "sat":{
+                              "nri":[-100, 500],
+                              "nlcd":[-100, 100],
+                              "nass":[-500, 500]
+                        },
+                        "legend.title":"Difference (%)"
+                  },
+                  "diff_perc_year_eu": {
+                        "name_map":"eu",
+                        "col": "diff_perc_year_eu",
+                        "sat_1":{
+                              "nri":[-0.2, 0.001],
+                              "nlcd":[-0.05, 0.05],
+                              "nass":[-0.2, 0.15]
+                        },
+                        "sat":{
+                              "nri":[-0.2, 0.2],
+                              "nlcd":[-0.2, 0.2],
+                              "nass":[-0.2, 0.2]
+                        },
+                        "legend.title":"Diff % state"
+                  },
+                  "diff_perc": {
+                        "col": "diff_perc",
+                        "sat":{
+                              "nri":[-100, 100],
+                              "nlcd":[-50, 50],
+                              "nass":[-500, 500]
+                        },
+                        "legend.title":"Difference (%)"
+                  }                      
+            },
+            "scatterplots": {
+                  "raw_acres": {
+                        "name_sp":"raw",
+                        "x": "acres_usxp_per_year",
+                        "y":"acres_per_year"
+                  },
+                  "perc_eu": {
+                        "name_sp":"eu",
+                        "x": "acres_usxp_per_year_per_eu",
+                        "y":"acres_per_year_per_eu",
+                        "log_trans":["no_log", "log10", "log10_plus1"]
+
+
+                  }                       
+            }
+      },
+
+
+      "counties": {
+            "maps": {
+                  "diff_acres": {
+                        "name_map":"raw",
+                        "col": "diff_acres",
+                        "sat":{
+                              "nri":[-2000, 2000],
+                              "nlcd":[-500, 500],
+                              "nass":[-2000, 2000]
+                        },
+                        "legend.title":"Diff (acres)"
+                  },
+                  "diff_perc": {
+                        "col": "diff_perc",
+                        "sat":{
+                              "nri":[-100, 100],
+                              "nlcd":[-100, 100],
+                              "nass":[-500, 500]
+                        },
+                        "legend.title":"Difference (%)"
+                  },
+                  "acres_per_year_per_eu": {
+                        "name_map":"eu",
+                        "col": "acres_per_year_per_eu",
+                        "sat_1":{
+                              "nri":[-0.2, 0.2],
+                              "nlcd":[-0.1, 0.1],
+                              "nass":[-0.5, 0.5]
+                        },
+                        "sat":{
+                              "nri":[-0.75, 0.75],
+                              "nlcd":[-0.75, 0.75],
+                              "nass":[-0.75, 0.75]
+                        },
+                        "legend.title":"Annual Crop Expansion (%)"
+                  },
+                   "diff_perc_year_eu": {
+                        "name_map":"eu",
+                        "col": "diff_perc",
+                        "sat_1":{
+                              "nri":[-0.2, 0.2],
+                              "nlcd":[-0.1, 0.1],
+                              "nass":[-0.5, 0.5]
+                        },
+                        "sat":{
+                              "nri":[-0.2, 0.2],
+                              "nlcd":[-0.2, 0.2],
+                              "nass":[-0.2, 0.2]
+                        },
+                        "legend.title":"Diff % county"
+                  }
+
+            },
+            "scatterplots": {
+                  "raw_acres": {
+                        "name_sp":"raw",
+                        "x": "acres_usxp_per_year",
+                        "y": "acres_per_year"
+                  },
+                  "perc_eu": {
+                        "name_sp":"eu",
+                        "x": "acres_usxp_per_year_per_eu",
+                        "y":"acres_per_year_per_eu",
+                        "log_trans":{"no_log":["x_no_log","y_no_log"], 
+                                     "log10":["x_log10","y_log10"],
+                                     "log10_plus1":["x_log10_plus1","y_log10_plus1"]
+                                    }
+                  }                        
+            }
+      },
+
+
+      "districts": {
+            "maps": {
+                  "diff_acres": {
+                        "name_map":"raw",
+                        "col": "diff_acres",
+                        "sat":{
+                              "nri":[-2000, 2000],
+                              "nlcd":[-500, 500],
+                              "nass":[-2000, 2000]
+                        },
+                        "legend.title":"Diff (acres)"
+                  },
+                  "diff_perc": {
+                        "col": "diff_perc",
+                        "dataset":{"nri":{"sat":[-100, 100],
+                                          "palette":"YlOrRd"},
+                                   "nlcd":{"sat":[-100, 100],
+                                          "palette":"YlOrRd"},
+                                   "nass":{"sat":[-100, 100],
+                                          "palette":"YlOrRd"}},
+                        "sat":{
+                              "nri":[-100, 100],
+                              "nlcd":[-100, 100],
+                              "nass":[-500, 500]
+                        },
+                        "legend.title":"Difference (%)"
+                  },
+                  "diff_perc_year_eu": {
+                        "name_map":"eu",
+                        "col": "diff_perc_year_eu",
+                        "sat_1":{
+                              "nri":[-0.2, 0.2],
+                              "nlcd":[-0.1, 0.1],
+                              "nass":[-0.5, 0.5]
+                        },
+                        "sat":{
+                              "nri":[-0.2, 0.2],
+                              "nlcd":[-0.2, 0.2],
+                              "nass":[-0.2, 0.2]
+                        },
+                        "legend.title":"Diff % county"
+                  }
+
+            },
+            "scatterplots": {
+                  "raw_acres": {
+                        "name_sp":"raw",
+                        "x": "acres_usxp_per_year",
+                        "y": "acres_per_year"
+                  },
+                  "perc_eu": {
+                        "name_sp":"eu",
+                        "x": "acres_usxp_per_year_per_eu",
+                        "y":"acres_per_year_per_eu",
+                        "log_trans":{"no_log":["x_no_log","y_no_log"], 
+                                     "log10":["x_log10","y_log10"],
+                                     "log10_plus1":["x_log10_plus1","y_log10_plus1"]
+                                    }
+                  }                        
+            }
+      }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
