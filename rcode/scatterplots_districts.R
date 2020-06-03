@@ -31,12 +31,16 @@ library(ggpmisc)
 
 library("ggpubr")
 library(readr)
+library(SciViews)
 
 options(scipen=999)
 
 # load fonts - every session
 loadfonts(device = "win", quiet = TRUE)
 
+
+
+############### clean slate ###################################################
 
 rm(list = ls(all.names = TRUE)) #will clear all objects includes hidden objects.
 gc() #free up memrory and report the memory usage.
@@ -60,12 +64,14 @@ killDbConnections()
 
 
 # ###### link to json files #################################################
-figure_json = 'C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\json\\figure_json_v2.json'
+figure_json = 'C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\json\\figure_json.json'
 figure_obj<- fromJSON(file=figure_json)
 
 
 
-###get postgres connections ############################
+######################################################################
+##########  create postgres connections ##########################################
+#########################################################################
 user <- "mbougie"
 host <- '144.92.235.105'
 port <- '5432'
@@ -77,24 +83,24 @@ con_usxp_deliverables <- dbConnect(PostgreSQL(), dbname = 'usxp_deliverables', u
 con_usxp <- dbConnect(PostgreSQL(), dbname = 'usxp', user = user, host = host, port=port, password = password)
 
 
-#### bring in featureclasses for context in map ##################################
+######################################################################
+##########  import featureclasses ##########################################
+#########################################################################
 states <- readOGR(dsn='H:\\e_drive\\data\\general\\shapefiles.gdb',layer="states_102003")
 counties <- readOGR(dsn='H:\\e_drive\\data\\general\\shapefiles.gdb',layer="counties_102003")
 
 fc <- sf::st_read("H:\\e_drive\\data\\nass\\districts\\asds.gdb", layer = "asd_2012_20m_102003")
 
-
-
-sql_nri = 'C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\sql\\districts\\nri.sql'
-nri <- read_file(sql_nri)
-xx = dbGetQuery(con_nri,nri)
-
 ######################################################################
 ##########  create dataframe ##########################################
 #########################################################################
-createDF_usxp <- function(query){
+
+createDF_usxp <- function(cp){
   
-  ########### create intial DF and join dataframes together ##################
+  p = fp$datasets_usxp[[cp$datasets_usxp]]
+  con = eval(parse(text = p$con))
+  query= read_file(paste(path_sql, eu, p$query, sep = "\\"))
+  
   
   ####read in dataset from postgres
   df_init <- dbGetQuery(con_usxp, query)
@@ -106,12 +112,15 @@ createDF_usxp <- function(query){
   return(st_as_sf(df))
 }
 
-
-
-createDF <- function(con, query, usxp_query, map){
-  
+createDF <- function(name, map){
+  # name="NLCD"
+  cp <- fp$datasets[[name]]
   ########### create intial DF and join dataframes together ##################
-  df_usxp = createDF_usxp(query=usxp_query)
+  df_usxp = createDF_usxp(cp)
+  
+  con = eval(parse(text = cp$con))
+  query= read_file(paste(path_sql, eu, cp$query, sep = "\\"))
+  
   ####read in dataset from postgres
   df_init <- dbGetQuery(con, query)
   
@@ -120,17 +129,10 @@ createDF <- function(con, query, usxp_query, map){
 
   df$acres_per_year_per_eu = (df$acres_per_year/df$acres) * 100
 
-  # ####create difference of acres per year between dataframes
-  # df$diff_acres = (df$acres_usxp_per_year_per_eu - df$acres_per_year_per_eu)
-  # # ####the difference per year relative to acres of usxp per year
-  # df$diff_perc = (df$diff_acres/(df$acres_usxp_per_year_per_eu)*100)
-  
-  
   ####create difference of acres per year between dataframes
-  df$diff_acres = (df$acres_usxp_per_year-df$acres_per_year)
-  
+  df$diff_acres = (df$acres_per_year_per_eu - df$acres_usxp_per_year_per_eu)
   # ####the difference per year relative to acres of usxp per year
-  df$diff_perc = (df$diff_acres/(df$acres_usxp_per_year)*100)
+  df$diff_ratio = (df$diff_acres/(df$acres_usxp_per_year_per_eu))
   
   ########### apply saturation for map figure ##################################
   
@@ -140,36 +142,32 @@ createDF <- function(con, query, usxp_query, map){
   df$col_sat[df$col_sat >= fp$maps[[map]]$sat] <- fp$maps[[map]]$sat
 
   # ########### transform data for scatterplot figure #################################
-  df$x = df[[fp$scatterplots$perc_eu$x]]
-  df$y = df[[fp$scatterplots$perc_eu$y]]
 
-  df$x_log10 = log(df[[fp$scatterplots$perc_eu$x]], base=10)
-  df$y_log10 = log(df[[fp$scatterplots$perc_eu$y]], base=10)
-
+  df$x_log1p = log1p(df$acres_usxp_per_year)
+  df$y_log1p = log1p(df$acres_per_year)
+  
 
   ### Note need to use the st_as_sf function after appending columns or geom_sf won't recognize object!!!!
   return(st_as_sf(df))
 }
 
-
 ##################################################################################
 ######## qaqc table to check dataframe creation and get the ranges of scatterplots ###############################
 #############################################################################################
+
 qaqc <- function(df, fileout){
   test <- st_drop_geometry(df)
+  
   csv_out0 = paste0('I:\\projects\\usxp\\series\\s35\\deliverables\\scatterplot\\csv\\', fileout, '_raw.csv')
   write.csv(test, csv_out0)
   
-  test <- test %>% dplyr::select(acres_usxp_per_year_per_eu, acres_per_year_per_eu , x_log10, y_log10, x_log10_plus1, y_log10_plus1)
+  test <- test %>% dplyr::select(acres_usxp_per_year_per_eu, acres_per_year_per_eu , diff_acres, diff_ratio, x_log1p, y_log1p)
   df_qaqc <- data.frame(min=sapply(test,min), max=sapply(test,max), min=sapply(test[Reduce(`&`, lapply(test, is.finite)),],min), max=sapply(test[Reduce(`&`, lapply(test, is.finite)),],max))
   
   csv_out1 = paste0('I:\\projects\\usxp\\series\\s35\\deliverables\\scatterplot\\csv\\', fileout, '_qaqc.csv')
   write.csv(df_qaqc, csv_out1)
   
-  # csv_out2 = paste0('I:\\projects\\usxp\\series\\s35\\deliverables\\scatterplot\\csv\\', fileout, '.csv')
-  # write.csv(test, csv_out2)
 }
-
 
 ##################################################################
 #### map function #########################################
@@ -189,12 +187,7 @@ createMap <- function(df, map, plot.title){
     
 
   
-  #   ### main dataframe ###########
-  # geom_polygon(
-  #   data= mapa.df,
-  #   aes(y=lat, x=long, group=group, fill = acres_per_year)
-  # ) + 
-    
+  ######## main dataframe ###########
   geom_sf(data= df, aes(fill = col_sat)) + 
     
     
@@ -253,15 +246,22 @@ createMap <- function(df, map, plot.title){
 ###################################################################################
 
 hexBinRegPlot = function(df, dataset){
+  
+  
+  minVal = min(df$acres_usxp_per_year, df$acres_per_year, na.rm = T) # the na.rm = T here and below is important!
+  print(minVal)
+  maxVal = max(df$acres_usxp_per_year, df$acres_per_year, na.rm = T)
+  print(maxVal)
+  
+  
   my.formula <- y ~ x
+  # x = fp$datasets[[dataset]]$x
+  # y = fp$datasets[[dataset]]$y
   
-  
-  # p <- ggplot(data=df,aes(x = .data[[fp$log_trans[1]]], y = .data[[fp$log_trans[2]]])) +
-  # p <- ggplot(data=df,aes(x = x_log10, y = y_log10)) +
-    # p <- ggplot(data=df,aes(x = .data[[x]], y = .data[[y]])) +
-  p <- ggplot(data=df,aes(x = x, y = y)) +
-    # geom_point() +
-    geom_hex(bins = 35) +
+  # p <- ggplot(data=df,aes(x = .data[[x]], y = .data[[y]])) +
+  p <- ggplot(data=df,aes(x = acres_usxp_per_year, y = acres_per_year)) +
+    geom_point(colour = "#5c8a8a", aes(size=20,alpha=0.7)) +
+    # geom_hex(bins = 35) +
     theme_bw()+
     guides(fill = guide_colourbar(ticks.colour = NA,
                                   frame.colour = "black",
@@ -281,6 +281,7 @@ hexBinRegPlot = function(df, dataset){
       legend.title=element_text(size=30),
       legend.key.width = unit(1, "cm"),
       legend.key.height = unit(2, "cm"),
+      legend.position="none",
       
       
       # panel.background = element_rect(fill = 'green', color = 'red'),
@@ -288,7 +289,7 @@ hexBinRegPlot = function(df, dataset){
       ###extend bottom margin of plot to accomidate legend and grob annotation
       # plot.background = element_rect(fill = 'green', color = 'red'),
       plot.background = element_rect(fill = NA, color = NA),
-      plot.margin = unit(c(t=4, r=0, b=0, l=0), "cm")
+      plot.margin = unit(c(t=2, r=0, b=2, l=0), "cm")
     )+
     
     geom_abline(slope = 1, intercept = 0, colour="black",size=2, linetype = "dashed") +
@@ -297,8 +298,81 @@ hexBinRegPlot = function(df, dataset){
                  aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
                  size=9,
                  parse = TRUE) +
-    # scale_x_continuous(trans='log10') +
-    # scale_y_continuous(trans='log10') +
+    
+
+    scale_y_continuous(trans = 'log1p',
+                       breaks = breaks_log(base = 10),
+                       labels = function(x) comma(x),
+                       limits = c(minVal, maxVal))+
+    scale_x_continuous(trans = 'log1p',
+                       breaks = breaks_log(base = 10),
+                       labels = function(x) comma(x),
+                       limits = c(minVal, maxVal))+
+
+    scale_fill_gradientn(colors = rev(brewer.pal(11,"Spectral")))
+  
+  
+  p
+  return(p)
+}
+
+
+
+
+
+hexBinRegPlot_nass = function(df, dataset){
+  minVal = min(df$acres_usxp_per_year, df$acres_per_year, na.rm = T) # the na.rm = T here and below is important!
+  print(minVal)
+  maxVal = max(df$acres_usxp_per_year, df$acres_per_year, na.rm = T)
+  print(maxVal)
+  
+  my.formula <- y ~ x
+  # x = fp$datasets[[dataset]]$x
+  # y = fp$datasets[[dataset]]$y
+  
+  # p <- ggplot(data=df,aes(x = .data[[x]], y = .data[[y]])) +
+  p <- ggplot(data=df,aes(x = acres_usxp_per_year, y = acres_per_year)) +
+    geom_point(colour = "#5c8a8a", aes(size=20,alpha=0.7)) +
+    # geom_hex(bins = 35) +
+    theme_bw()+
+    guides(fill = guide_colourbar(ticks.colour = NA,
+                                  frame.colour = "black",
+                                  title="Count"))+
+    
+    labs(y=bquote(.(dataset) ~ ('acres' ~ yr^-1)), x=bquote('This Study' ~ ('acres' ~ yr^-1))) + 
+    theme(
+      panel.border= element_rect(size = 2),
+      text = element_text(size=30),
+      
+      axis.title.x = element_text(face = 'bold'),
+      axis.title.y = element_text(face = 'bold'),
+      axis.title = element_text(size = 25),
+      
+      legend.text=element_text(size=25),
+      legend.text.align = 0,
+      legend.title=element_text(size=30),
+      legend.key.width = unit(1, "cm"),
+      legend.key.height = unit(2, "cm"),
+      legend.position="none",
+      
+      # panel.background = element_rect(fill = 'green', color = 'red'),
+      panel.background = element_rect(fill = NA, color = NA),
+      ###extend bottom margin of plot to accomidate legend and grob annotation
+      # plot.background = element_rect(fill = 'green', color = 'red'),
+      plot.background = element_rect(fill = NA, color = NA),
+      plot.margin = unit(c(t=2, r=0, b=2, l=0), "cm")
+    )+
+    
+    geom_abline(slope = 1, intercept = 0, colour="black",size=2, linetype = "dashed") +
+    geom_smooth(method = "lm", se = FALSE, formula = my.formula, size=2, colour="black") +
+    stat_poly_eq(formula = my.formula,
+                 aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+                 size=9,
+                 parse = TRUE) +
+    
+
+    scale_x_continuous(limits = c(minVal, maxVal))+
+    scale_y_continuous(limits = c(minVal, maxVal))+
     scale_fill_gradientn(colors = rev(brewer.pal(11,"Spectral")))
   
   
@@ -310,202 +384,54 @@ hexBinRegPlot = function(df, dataset){
 
 
 ########################################################################################
-###### ~~~~~~~~~~~~~~~~~~~~~~~~create queries~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-###############################################################################################
+###### ~~~~~~~~~~~~~~~~~~~~~~~~queries~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-----########
+########################################################################################
 
+eu='districts'
+fp = figure_obj[[eu]]
+path_sql = 'C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\sql'
 
 ########## USXP ##############################################################
 
-# query_usxp_exp = "SELECT
-# c.district_unique,
-# b.state_name,
-# sum((a.acres/8)) as acres_usxp_per_year
-# --((a.acres/8)/b.acres_calc * 100) as acres_usxp_per_year_per_eu
-# --st_union(st_snaptogrid(b.wkb_geometry, 0.0001::double precision)) AS geom
-# FROM
-# zonal_stats.s35_mtr_counties as a INNER JOIN spatial.counties_102003 as b
-# USING(atlas_stco) INNER JOIN
-# misc.district_lookup as c on b.atlas_stco=c.fips 
-# WHERE label in ('3')
-# group by b.state_name, c.district_unique"
 
-query_usxp_exp = read_file('C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\sql\\districts\\query_usxp_exp.sql')
-df_usxp_exp <- createDF_usxp(con=con_usxp, query=query_usxp_exp)
-
-
-
-
-# query_usxp_net = "SELECT
-# c.district_unique,
-# county.state_name,
-# sum((mtr3.acres - mtr4.acres)/8) as acres_usxp_per_year
-# ---(((mtr3.acres - mtr4.acres)/8 )/county.acres_calc * 100) as acres_usxp_per_year_per_eu
-# --county.wkb_geometry as geom
-# FROM 
-# 
-# (SELECT 
-# t1.atlas_stco,
-# t1.acres as acres
-# FROM 
-# zonal_stats.s35_mtr_counties as t1 
-# WHERE label in ('3')) as mtr3
-# 
-# 
-# INNER JOIN
-# 
-# 
-# (SELECT 
-# t1.atlas_stco, 
-# t1.acres as acres
-# FROM 
-# zonal_stats.s35_mtr_counties as t1 
-# WHERE label in ('4')) as mtr4
-# 
-# 
-# USING(atlas_stco)
-# 
-# INNER JOIN
-# spatial.counties_102003 as county USING(atlas_stco) 
-# INNER JOIN
-# misc.district_lookup as c on county.atlas_stco=c.fips 
-# group by county.state_name, c.district_unique"
-
-query_usxp_net = read_file('C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\sql\\districts\\query_usxp_net.sql')
-df_usxp_net <- createDF_usxp(con=con_usxp, query=query_usxp_net)
-
-
-
-
-
-
-########## NRI ##############################################################
-
-# query_nri =  "SELECT
-# c.district_unique,
-# b.state_name,
-# sum(a.expansion/8) as acres_per_year
-# --st_union(st_snaptogrid(b.wkb_geometry, 0.0001::double precision)) AS geom
-# FROM main.nri_2015_analysis as a INNER JOIN 
-# spatial.counties_102003 as b USING(atlas_stco)
-# INNER JOIN
-# misc.district_lookup as c on b.atlas_stco=c.fips 
-# --WHERE a.expansion IS NOT NULL
-# group by b.state_name, c.district_unique"
-
-query_nri = read_file('C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\sql\\districts\\query_nri.sql')
-
-
-########## NLCD ##############################################################
-
-# query_nlcd = "SELECT
-# c.district_unique,
-# b.state_name,
-# sum(a.acres/8) as acres_per_year
-# ----st_union(st_snaptogrid(b.wkb_geometry, 0.0001::double precision)) AS geom
-# FROM
-# choropleths.combine_nlcd08_16_histo as a INNER JOIN
-# spatial.counties_102003 as b
-# USING(atlas_stco) INNER JOIN
-# misc.district_lookup as c on b.atlas_stco=c.fips 
-# WHERE a.label = '4'
-# group by b.state_name, c.district_unique"
-
-query_nlcd = read_file('C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\sql\\districts\\query_nlcd.sql')
-
-
-
-
-
-#####################  NASS #####################################################
-
-# query_nass="SELECT
-# c.district_unique,
-# b.state_name,
-# sum(a.diff/10) as acres_per_year
-# --d.wkb_geometry AS geom
-# ---t_union(st_snaptogrid(b.wkb_geometry, 0.0001::double precision)) AS geom
-# FROM ag_census.ag_census_expansion as a INNER JOIN
-# spatial.counties_102003 as b USING(atlas_stco) INNER JOIN
-# misc.district_lookup as c on b.atlas_stco=c.fips 
-# ---spatial.asd_2012_20m_102003 as d on c.district_unique=d.stasd_a
-# group by b.state_name, c.district_unique
-# order by state_name"
-
-query_nass = read_file('C:\\Users\\Bougie\\Desktop\\scripts\\projects\\usxp\\stages\\deliverables\\scatterplots\\sql\\districts\\query_nass.sql')
-
-
-
-
-
-
-########################################################################################
-###### ~~~~~~~~~~~~~~~~~~~~~~~~ main function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-###############################################################################################
-
-# main <- function(){
-#   df1_list =list()
-#   map1_list = list()
-#   df2_list =list()
-#   map2_list = list()
-#   scatterplot_list = list()
-#   for(name in names(dfParams)){
-#     
-#     print(dfParams[[name]])
-#     obj = (dfParams[[name]])
-#     
-#     ####create dataframe
-#     df1 = createDF(con=obj$con, query=obj$query, df_usxp=obj$df_uxsp, current_col="acres_per_year_per_eu", sat=1.0)
-#     df1_list <- append(df1_list, list(df1))
-#     ###create map1
-#     map1 = createMap(df=df1,  plot.title="obj$plot.title", palette="RdBu", sat=1.0)
-#     map1_list <- append(map1_list, list(map1))
-# 
-# 
-#     ####create dataframe
-#     df2 = createDF(con=obj$con, query=obj$query, df_usxp=obj$df_uxsp, current_col="diff_perc", sat=200)
-#     df2_list <- append(df2_list, list(df2))
-#     ###create map2
-#     map2 = createMap(df=df2, plot.title="", palette="RdBu", sat=200)
-#     map2_list <- append(map2_list, list(map2))
-#     
-# 
-#     ###create scatterplot
-#     scatterplot = hexBinRegPlot_2(df=df2)
-#     scatterplot_list <- append(scatterplot_list, list(scatterplot))
-#   }
-#   
-#   finalList <- list("df1"=df1_list, "map1"=map1_list, "df2"=df2_list, "map2"=map2_list, "scatterplot"=scatterplot_list)
-#   return(finalList)
-# }
 
 
 ########################################################################################
 ###### ~~~~~~~~~~~~~~~~~~~~~~~~ RUN SCRIPT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ###############################################################################################
 
-eu='districts'
-fp = figure_obj[[eu]]
-
-
 
   for(name in names(fp$datasets)){
+    print(name)
 
-    con=eval(parse(text = fp$datasets[[name]]$con))
-    query=eval(parse(text = fp$datasets[[name]]$query))
-    usxp_query=eval(parse(text = fp$datasets[[name]]$usxp_query))
-   
-    df1 = createDF(con=con, query=query, usxp_query=usxp_query, map="map1")
-    figure_obj[[eu]]$datasets[[name]]$df1 = df1
+    df1 = createDF(name, map="map1")
+    fp$datasets[[name]]$df1 = df1
+    ###export df to csv
+    qaqc(df=df1, name)
     map1 = createMap(df=df1, map="map1", plot.title=name)
-    figure_obj[[eu]]$datasets[[name]]$map1 = map1
-  
-    df2 = createDF(con=con, query=query, usxp_query=usxp_query, map="map2")
-    figure_obj[[eu]]$datasets[[name]]$df2 = df2
-    map2 = createMap(df=df2,map="map2", plot.title='')
-    figure_obj[[eu]]$datasets[[name]]$map2 = map2
+    fp$datasets[[name]]$map1 = map1
     
-    sp = hexBinRegPlot(df=df2, dataset=name)
-    figure_obj[[eu]]$datasets[[name]]$sp = sp
+    df2 = createDF(name, map="map2")
+    fp$datasets[[name]]$df2 = df2
+    ###export df to csv
+    qaqc(df=df2, name)
+    map2 = createMap(df=df2,map="map2", plot.title=name)
+    fp$datasets[[name]]$map2 = map2
+    
+    df3 = createDF(name, map="map3_diff_acres")
+    fp$datasets[[name]]$df3 = df3
+    ###export df to csv
+    qaqc(df=df3, name)
+    map3 = createMap(df=df3,map="map3_diff_acres", plot.title='')
+    fp$datasets[[name]]$map3 = map3
+    
+    if(name=="NASS"){
+      sp = hexBinRegPlot_nass(df=df2, dataset=name)
+      fp$datasets[[name]]$sp = sp
+    }else{
+      sp = hexBinRegPlot(df=df2, dataset=name)
+      fp$datasets[[name]]$sp = sp
+    }
   }
 
 
@@ -516,22 +442,19 @@ fp = figure_obj[[eu]]
 ########################################################################################
 ###### ~~~~~~~~~~~~~~~~~~~~~~~~ Arrange panels ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ###############################################################################################
-nri_obj=figure_obj[[eu]]$datasets[['NRI']]
-nlcd_obj=figure_obj[[eu]]$datasets[['NLCD']]
-nass_obj=figure_obj[[eu]]$datasets[['NASS']]
+nri_obj=fp$datasets[['NRI']]
+nlcd_obj=fp$datasets[['NLCD']]
+nass_obj=fp$datasets[['NASS']]
 
-c1 = ggarrange(nri_obj$map1, nlcd_obj$map1, nass_obj$map1, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
+# c0 = ggarrange(nri_obj$map1, nlcd_obj$map1, nass_obj$map1, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
 c2 = ggarrange(nri_obj$map2, nlcd_obj$map2, nass_obj$map2, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
-c3 = ggarrange(nri_obj$sp, nlcd_obj$sp, nass_obj$sp, ncol = 1, nrow = 3)
+c3 = ggarrange(nri_obj$map3, nlcd_obj$map3, nass_obj$map3, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
+c4 = ggarrange(nri_obj$sp, nlcd_obj$sp, nass_obj$sp, ncol = 1, nrow = 3)
 
-map = ggarrange(c1, c2, c3, ncol = 3, nrow = 1)
+map = ggarrange(c2, c3, c4, ncol = 3, nrow = 1)
 
-fileout = paste0('I:\\projects\\usxp\\series\\s35\\deliverables\\scatterplot\\figures\\test.png')
+fileout = paste0('I:\\projects\\usxp\\series\\s35\\deliverables\\scatterplot\\figures\\',eu,'.png')
 ggplot2::ggsave(fileout, width = 34, height = 25, dpi = 500)
-
-
-
-
 
 
 
