@@ -124,7 +124,6 @@ createDF <- function(name, map){
   ####join usxp dataframe together specific dataframe
   df  <- df_usxp %>% inner_join(df_init , by = "atlas_name")
 
-  
   ####create difference of acres per year between dataframes
   df$diff_acres = (df$acres_per_year_per_eu - df$acres_usxp_per_year_per_eu)
   # ####the difference per year relative to acres of usxp per year
@@ -137,24 +136,6 @@ createDF <- function(name, map){
   df$col_sat[df$col_sat <= -fp$maps[[map]]$sat] <- -fp$maps[[map]]$sat
   df$col_sat[df$col_sat >= fp$maps[[map]]$sat] <- fp$maps[[map]]$sat
   
-  # ########### transform data for scatterplot figure #################################
-  
-  # df$x_log1p = log1p(df$acres_usxp_per_year)
-  # df$y_log1p = log1p(df$acres_per_year)
-  
-  
-  
-  
-  
-
-  # ########### transform data for scatterplot figure #################################
-  # df$x = df[[fp$scatterplots$perc_eu$x]]
-  # df$y = df[[fp$scatterplots$perc_eu$y]]
-  # 
-  # df$x_log10 = log(df[[fp$scatterplots$perc_eu$x]], base=10)
-  # df$y_log10 = log(df[[fp$scatterplots$perc_eu$y]], base=10)
-
-
   ### Note need to use the st_as_sf function after appending columns or geom_sf won't recognize object!!!!
   return(st_as_sf(df))
 }
@@ -182,7 +163,7 @@ qaqc <- function(df, fileout){
 #### map function #########################################
 ##################################################################
 
-createMap <- function(df, map, plot.title){
+createMap <- function(df, map, plot.title, axis.title.y){
 
   
   d = ggplot() + 
@@ -195,13 +176,6 @@ createMap <- function(df, map, plot.title){
   ) +
     
 
-  
-  #   ### main dataframe ###########
-  # geom_polygon(
-  #   data= mapa.df,
-  #   aes(y=lat, x=long, group=group, fill = acres_per_year)
-  # ) + 
-    
   geom_sf(data= df, aes(fill = col_sat)) + 
     
     
@@ -210,40 +184,41 @@ createMap <- function(df, map, plot.title){
       aes(x=long,y=lat,group=group),
       fill=NA,
       # color='#D3D3D3',
-      color='#383838',
+      colour='#808080',
       size=1.5
     ) +
     
-  labs(title = plot.title) + 
+  labs(title = plot.title, y=axis.title.y) + 
     
   theme(
-    #### nulled attributes ##################
-    axis.text.x = element_blank(),
-    axis.title.x=element_blank(),
-    axis.text.y = element_blank(),
-    axis.title.y=element_blank(),
-    axis.ticks = element_blank(),
-    axis.line = element_blank(),
-    
-    # panel.border= element_rect(size = 2, fill = NA),
-    # panel.background = element_rect(fill = 'blue', color = 'purple'),
-    panel.background = element_rect(fill = NA, color = NA),
-    panel.grid.major = element_blank(),
-    
-    legend.text=element_text(size=25),
-    legend.text.align = 0,
-    legend.title=element_text(size=30),
-    legend.key.width = unit(4,"cm"),
-    legend.key.height = unit(1,"cm"),
-    
-    # plot.background = element_rect(fill = 'green', color = 'red'),
-    plot.background = element_rect(fill = NA, color = NA),
-    plot.title = element_text(size= 35),
-    plot.margin = unit(c(t=0, r=0, b=0, l=0), "cm")
+      #### nulled attributes ##################
+      axis.text.x = element_blank(),
+      axis.title.x=element_blank(),
+      axis.text.y = element_blank(),
+      axis.title.y = element_text(size = 40, face="bold", color = "#4e4d47"),
+      axis.ticks = element_blank(),
+      axis.line = element_blank(),
+      
+      # panel.border= element_rect(size = 2, fill = NA),
+      # panel.background = element_rect(fill = 'blue', color = 'purple'),
+      panel.background = element_rect(fill = NA, color = NA),
+      panel.grid.major = element_blank(),
+      
+      legend.text=element_text(size=25, color = "#4e4d47"),
+      legend.text.align = 0.5,
+      legend.title=element_text(size=30, color = "#4e4d47"),
+      legend.key.width = unit(4,"cm"),
+      legend.key.height = unit(1,"cm"),
+      
+      # plot.background = element_rect(fill = 'green', color = 'red'),
+      plot.background = element_rect(fill = NA, color = NA),
+      plot.title=element_text(size=35, face = "bold", color = "#4e4d47"),
+      plot.margin = unit(c(t=0, r=0, b=0, l=0), "cm")
+
   ) + 
  
   # coord_fixed(ratio = 1, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") + 
-  scale_fill_gradientn(colors = rev(brewer.pal(11,fp$maps[[map]]$palette)),
+  scale_fill_gradientn(colors = c("#003c30","#01665e","#35978f","#80cdc1","#c7eae5", "#fddbc7","#f4a582","#d6604d","#b2182b","#67001f"),
                        values = rescale(c(-fp$maps[[map]]$sat, 0, fp$maps[[map]]$sat)),
                        limits=c(-fp$maps[[map]]$sat, fp$maps[[map]]$sat),
                        guide = guide_colourbar(title = fp$maps[[map]]$legend.title,
@@ -259,35 +234,42 @@ createMap <- function(df, map, plot.title){
 ##### hexbin function ######################################################
 ###################################################################################
 
-hexBinRegPlot = function(df, dataset){
+hexBinRegPlot = function(df, dataset, plot.title){
+  minVal = min(df$acres_usxp_per_year, df$acres_per_year, na.rm = T) # the na.rm = T here and below is important!
+  print(minVal)
+  maxVal = max(df$acres_usxp_per_year, df$acres_per_year, na.rm = T)
+  print(maxVal)
+  
+  
   my.formula <- y ~ x
   
   
   # p <- ggplot(data=df,aes(x = .data[[fp$log_trans[1]]], y = .data[[fp$log_trans[2]]])) +
   # p <- ggplot(data=df,aes(x = x_log10, y = y_log10)) +
-    # p <- ggplot(data=df,aes(x = .data[[x]], y = .data[[y]])) +
+  # p <- ggplot(data=df,aes(x = .data[[x]], y = .data[[y]])) +
   p <- ggplot(data=df,aes(x = acres_usxp_per_year, y = acres_per_year)) +
-    # geom_point() +
-    geom_hex(bins = 35) +
+    geom_point(colour = "#5c8a8a", aes(size=20,alpha=0.7)) +
+    # geom_hex(bins = 35) +
     theme_bw()+
-    guides(fill = guide_colourbar(ticks.colour = NA,
-                                  frame.colour = "black",
-                                  title="Count"))+
+    guides(colour = "none",size = "none") + 
 
-    labs(y=bquote(.(dataset) ~ ('acres' ~ yr^-1)), x=bquote('This Study' ~ ('acres' ~ yr^-1))) + 
+    labs(title = plot.title,
+         y=bquote(.(dataset) ~ ('acres' ~ yr^-1)), x=bquote('This study' ~ ('acres' ~ yr^-1))) + 
     theme(
       panel.border= element_rect(size = 2),
       text = element_text(size=30),
       
-      axis.title.x = element_text(face = 'bold'),
-      axis.title.y = element_text(face = 'bold'),
+      axis.title.x = element_text(size = 30, face="bold"),
+      axis.title.y = element_text(size = 30, face="bold"),
       axis.title = element_text(size = 25),
       
-      legend.text=element_text(size=25),
+      legend.text=element_text(size=25, color="white"),
       legend.text.align = 0,
-      legend.title=element_text(size=30),
+      # legend.title=element_text(size=30),
+      legend.title = element_text(color = 'white'),
       legend.key.width = unit(1, "cm"),
       legend.key.height = unit(2, "cm"),
+      legend.position="none",
       
       
       # panel.background = element_rect(fill = 'green', color = 'red'),
@@ -295,7 +277,8 @@ hexBinRegPlot = function(df, dataset){
       ###extend bottom margin of plot to accomidate legend and grob annotation
       # plot.background = element_rect(fill = 'green', color = 'red'),
       plot.background = element_rect(fill = NA, color = NA),
-      plot.margin = unit(c(t=4, r=0, b=0, l=0), "cm")
+      plot.title=element_text(size=30, face = "bold"),
+      plot.margin = unit(c(t=0, r=0, b=0, l=0), "cm")
     )+
     
     geom_abline(slope = 1, intercept = 0, colour="black",size=2, linetype = "dashed") +
@@ -308,8 +291,94 @@ hexBinRegPlot = function(df, dataset){
                  aes(label = ..rr.label..),
                  size=9,
                  parse = TRUE) + 
-    # scale_x_continuous(trans='log10') +
-    # scale_y_continuous(trans='log10') +
+    
+    scale_y_continuous(trans = 'log1p',
+                       breaks = breaks_log(base = 10),
+                       labels = function(x) comma(x),
+                       limits = c(minVal, maxVal))+
+    scale_x_continuous(trans = 'log1p',
+                       breaks = breaks_log(base = 10),
+                       labels = function(x) comma(x),
+                       limits = c(minVal, maxVal))+
+    
+    scale_fill_gradientn(colors = rev(brewer.pal(11,"Spectral")))
+  
+  
+  p
+  return(p)
+}
+
+
+
+
+
+hexBinRegPlot_nass = function(df, dataset, plot.title){
+  minVal = min(df$acres_usxp_per_year, df$acres_per_year, na.rm = T) # the na.rm = T here and below is important!
+  print(minVal)
+  maxVal = max(df$acres_usxp_per_year, df$acres_per_year, na.rm = T)
+  print(maxVal)
+  
+  
+  my.formula <- y ~ x
+  
+  
+  # p <- ggplot(data=df,aes(x = .data[[fp$log_trans[1]]], y = .data[[fp$log_trans[2]]])) +
+  # p <- ggplot(data=df,aes(x = x_log10, y = y_log10)) +
+  # p <- ggplot(data=df,aes(x = .data[[x]], y = .data[[y]])) +
+  p <- ggplot(data=df,aes(x = acres_usxp_per_year, y = acres_per_year)) +
+    geom_point(colour = "#5c8a8a", aes(size=20,alpha=0.7)) +
+    # geom_hex(bins = 35) +
+    theme_bw()+
+    guides(colour = "none",size = "none") + 
+    
+    labs(title = plot.title,
+         y=bquote(.(dataset) ~ ('acres' ~ yr^-1)), x=bquote('This study' ~ ('acres' ~ yr^-1))) + 
+    theme(
+      panel.border= element_rect(size = 2),
+      text = element_text(size=30),
+      
+      axis.title.x = element_text(size = 30, face="bold"),
+      axis.title.y = element_text(size = 30, face="bold"),
+      axis.title = element_text(size = 25),
+      
+      legend.text=element_text(size=25, color="white"),
+      legend.text.align = 0,
+      # legend.title=element_text(size=30),
+      legend.title = element_text(color = 'white'),
+      legend.key.width = unit(1, "cm"),
+      legend.key.height = unit(2, "cm"),
+      # legend.text = "none",
+      # legend.key = "none",
+      legend.position="none",
+      
+      
+      # panel.background = element_rect(fill = 'green', color = 'red'),
+      panel.background = element_rect(fill = NA, color = NA),
+      ###extend bottom margin of plot to accomidate legend and grob annotation
+      # plot.background = element_rect(fill = 'green', color = 'red'),
+      plot.background = element_rect(fill = NA, color = NA),
+      plot.title=element_text(size=30, face = "bold"),
+      plot.margin = unit(c(t=0, r=0, b=0, l=0), "cm")
+    )+
+    
+    geom_abline(slope = 1, intercept = 0, colour="black",size=2, linetype = "dashed") +
+    geom_smooth(method = "lm", se = FALSE, formula = my.formula, size=2, colour="black") +
+    # stat_poly_eq(formula = my.formula,
+    #              aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+    #              size=9,
+    #              parse = TRUE) +
+    stat_poly_eq(formula = my.formula,
+                 aes(label = ..rr.label..),
+                 size=9,
+                 parse = TRUE) + 
+    
+    scale_y_continuous(
+                       labels = function(x) comma(x),
+                       limits = c(minVal, maxVal))+
+    scale_x_continuous(
+                       labels = function(x) comma(x),
+                       limits = c(minVal, maxVal))+
+    
     scale_fill_gradientn(colors = rev(brewer.pal(11,"Spectral")))
   
   
@@ -340,26 +409,35 @@ for(name in names(fp$datasets)){
 
     #####name="NLCD"
 
-    df1 = createDF(name, map="map1")
-    qaqc(df=df1, name)
-    fp$datasets[[name]]$df1 = df1
-    map1 = createMap(df=df1, map="map1", plot.title=name)
-    fp$datasets[[name]]$map1 = map1
+    # df1 = createDF(name, map="map1")
+    # qaqc(df=df1, name)
+    # fp$datasets[[name]]$df1 = df1
+    # map2 = createMap(df=df2,map="map1", plot.title=fp$datasets[[name]]$label[1], axis.title.y=name)
+    # fp$datasets[[name]]$map1 = map1
 
     df2 = createDF(name, map="map2")
     qaqc(df=df2, name)
     fp$datasets[[name]]$df2 = df2
-    map2 = createMap(df=df2,map="map2", plot.title=name)
+    map2 = createMap(df=df2,map="map2", plot.title=fp$datasets[[name]]$label[1], axis.title.y=name)
     fp$datasets[[name]]$map2 = map2
 
     df3 = createDF(name, map="map3")
     qaqc(df=df3, name)
     fp$datasets[[name]]$df3 = df3
-    map3 = createMap(df=df3,map="map3", plot.title='')
+    map3 = createMap(df=df3,map="map3", plot.title=fp$datasets[[name]]$label[2], axis.title.y='')
     fp$datasets[[name]]$map3 = map3
 
-    sp = hexBinRegPlot(df=df2, dataset=name)
-    fp$datasets[[name]]$sp = sp
+    # sp = hexBinRegPlot(df=df2, dataset=name, plot.title=fp$datasets[[name]]$label[3])
+    # fp$datasets[[name]]$sp = sp
+    # 
+    
+    if(name=="NASS"){
+      sp = hexBinRegPlot_nass(df=df2, dataset=name, plot.title=fp$datasets[[name]]$label[3])
+      fp$datasets[[name]]$sp = sp
+    }else{
+      sp = hexBinRegPlot(df=df2, dataset=name, plot.title=fp$datasets[[name]]$label[3])
+      fp$datasets[[name]]$sp = sp
+    }
 
   
   }
@@ -379,7 +457,7 @@ nass_obj=fp$datasets[['NASS']]
 # c1 = ggarrange(nri_obj$map1, nlcd_obj$map1, nass_obj$map1, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
 c2 = ggarrange(nri_obj$map2, nlcd_obj$map2, nass_obj$map2, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
 c3 = ggarrange(nri_obj$map3, nlcd_obj$map3, nass_obj$map3, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
-c4 = ggarrange(nri_obj$sp, nlcd_obj$sp, nass_obj$sp, ncol = 1, nrow = 3)
+c4 = ggarrange(nri_obj$sp, nlcd_obj$sp, nass_obj$sp, ncol = 1, nrow = 3, common.legend = TRUE, legend="bottom")
 
 map = ggarrange(c2, c3, c4, ncol = 3, nrow = 1)
 

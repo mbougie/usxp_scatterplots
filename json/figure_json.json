@@ -14,17 +14,20 @@
                   "NRI": {
                         "con":"con_nri",
                         "query":"query_nri.sql",
-                        "datasets_usxp":"exp"
+                        "datasets_usxp":"exp",
+                        "label":["a","b","c"]
                   },
                   "NLCD": {
                         "con":"con_usxp_deliverables",
                         "query":"query_nlcd.sql",
-                        "datasets_usxp":"exp"
+                        "datasets_usxp":"exp",
+                        "label":["d","e","f"]
                   },
                   "NASS": {
                         "con":"con_nass",
                         "query":"query_nass.sql",
-                        "datasets_usxp":"net"
+                        "datasets_usxp":"net",
+                        "label":["g","h","i"]
                   }
             },
             "maps":{
@@ -36,15 +39,15 @@
                   },
                   "map2": {
                         "current_col":"acres_per_year_per_eu",
-                        "legend.title":"Annual Crop Expansion (%) --- datasets",
+                        "legend.title":"Annual expansion (% of district area)",
                         "palette":"RdBu", 
                         "sat":1.0
                   },
                   "map3": {
                         "current_col":"diff_acres",
-                        "legend.title":"Difference (not normalized) --- test",
+                        "legend.title":"Relative to this study (\u0394 percentage pts.)",
                         "palette":"RdBu", 
-                        "sat":0.2
+                        "sat":1.0
                   }
             },
             "scatterplots": {

@@ -231,7 +231,9 @@ createMap <- function(df, map, plot.title, axis.title.y){
   ) + 
  
   # coord_fixed(ratio = 1, xlim = NULL, ylim = NULL, expand = TRUE, clip = "on") + 
-  scale_fill_gradientn(colors = rev(brewer.pal(10,fp$maps[[map]]$palette)),
+    # c("#003c30","#01665e","#35978f","#80cdc1","#c7eae5", "#fddbc7","#f4a582","#d6604d","#b2182b","#67001f")
+  # scale_fill_gradientn(colors = rev(brewer.pal(10,fp$maps[[map]]$palette)),
+  scale_fill_gradientn(colors = c("#003c30","#01665e","#35978f","#80cdc1","#c7eae5", "#fddbc7","#f4a582","#d6604d","#b2182b","#67001f"),
                        values = rescale(c(-fp$maps[[map]]$sat, 0, fp$maps[[map]]$sat)),
                        limits=c(-fp$maps[[map]]$sat, fp$maps[[map]]$sat),
                        guide = guide_colourbar(title = fp$maps[[map]]$legend.title,
@@ -301,7 +303,7 @@ hexBinRegPlot = function(df, dataset, plot.title){
       # plot.background = element_rect(fill = 'green', color = 'red'),
       plot.background = element_rect(fill = NA, color = NA),
       plot.title=element_text(size=30, face = "bold"),
-      plot.margin = unit(c(t=0.5, r=0, b=0, l=0), "cm")
+      plot.margin = unit(c(t=0, r=0, b=0, l=0), "cm")
     )+
     
     geom_abline(slope = 1, intercept = 0, colour="black",size=2, linetype = "dashed") +
@@ -383,7 +385,7 @@ hexBinRegPlot_nass = function(df, dataset, plot.title){
       ###extend bottom margin of plot to accomidate legend and grob annotation
       plot.title=element_text(size=30, face = "bold"),
       plot.background = element_rect(fill = NA, color = NA),
-      plot.margin = unit(c(t=0.5, r=0, b=0, l=0), "cm")
+      plot.margin = unit(c(t=0, r=0, b=0, l=0), "cm")
     )+
     
     geom_abline(slope = 1, intercept = 0, colour="black",size=2, linetype = "dashed") +
